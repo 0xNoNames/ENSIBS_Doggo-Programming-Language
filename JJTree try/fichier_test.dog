@@ -1,0 +1,22 @@
+programme test
+
+fonction entier ajouter(entier x)
+    debut
+        x := x + 5;
+        retour x;
+    fin
+
+procedure afficherPaire(entier x)
+    debut
+        si x/2 = 0 alors
+            afficher(x);
+        fin si
+    fin
+
+principale
+    entier x := 0;
+    chaine x := "azaze";
+    debut
+        ecrire(x);
+        afficherPaire(x);
+    fin

@@ -1,0 +1,277 @@
+options {
+    JAVA_UNICODE_ESCAPE = true;
+    MULTI=true;
+    VISITOR=true;
+    NODE_DEFAULT_VOID=true;
+    NODE_EXTENDS="BaseNode";
+ }
+ 
+
+PARSER_BEGIN(Doggo)
+public class Doggo {    
+    public static void main(String args[]) throws ParseException {
+        Doggo parser;
+        // if (args.length == 0) {
+        //     System.out.println("Entrée standard");
+        //     parser = new Doggo(System.in);
+        // }
+        // else if (args.length == 1) {
+            System.out.println("Analyse du fichier : " + args[0] + "...");
+            try {
+                parser = new Doggo(new java.io.FileInputStream(args[0]));
+            } catch (java.io.FileNotFoundException e) {
+                System.out.println("Le fichier :" + args[0] + " n'existe pas...");
+                return;
+            }
+        // }
+        // else {
+        //     System.out.println("Erreur de lecture");
+        //     return;
+        // }
+        try {
+            ASTstart expr=parser.start();
+            DoggoVisitor v = new DoggoVisitor();
+            System.out.println(expr.jjtAccept(v,null));
+            // parser.programme();
+            System.out.println("Analyse syntaxique OK");
+        } catch (ParseException e) {
+            System.out.println(e);
+            System.out.println("L'analyse syntaxique révèle des erreurs");
+        }
+    }
+}
+PARSER_END(Doggo)
+
+SKIP :
+    {
+        " "
+        | "\t"
+        | "\n"
+        | "\r"
+        | "\f"
+    }
+
+SPECIAL_TOKEN :
+    {
+        <COMMENTAIRES: "$" (["a"-"z","A"-"Z","0"-"9", " "]) * "$">
+    }
+
+TOKEN :
+    {
+        <PROGRAMME : "programme">
+        | <FONCTION : "fonction">
+        | <PROCEDURE : "procedure">
+        | <PRINCIPALE : "principale">
+        | <DEBUT : "debut">
+        | <RETOUR : "retour">
+        | <FIN : "fin">
+        | <ECRITURE : "ecrire">
+        | <AFFICHER : "afficher">
+        | <SICOND_SI : "si">
+        | <SICOND_ALORS : "alors">
+        | <SICOND_FIN_SI : "fin si">
+        | <SICOND_SINON : "sinon">
+        | <BOUCLE_TANT_QUE : "tant que">
+        | <BOUCLE_FAIRE : "faire">
+        | <BOUCLE_FAIT : "fait">
+        | <INCREMENT : "++">
+        | <DECREMENT : "--">
+    }
+
+TOKEN :
+    {
+    <TYPE : "entier" | "chaine" | "flottant" | "booleen">
+    | <IDENTIFIANT : ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z","0"-"9"]) *>
+    | <SIGNE_AFFECTER : ":=">
+    | <VALEUR_ENTIER : (["0"-"9"]) *>
+    | <VALEUR_FLOTANT : <VALEUR_ENTIER>"."<VALEUR_ENTIER>>
+    | <VALEUR_CHAINE : "\"" (["a"-"z","A"-"Z","0"-"9"]) * "\"">
+    | <VALEUR_BOOLEEN : "Vrai" | "Faux">
+    }
+
+ASTstart start() #Start : {}
+{
+  programme()
+  { return jjtThis; }
+}
+
+
+void programme() : {}
+    {
+        <PROGRAMME><IDENTIFIANT>
+        (fonction() | procedure())*
+        principale()
+    }
+
+void fonction() : {}
+    {
+        <FONCTION> <TYPE> <IDENTIFIANT>"("(<TYPE> <IDENTIFIANT> ("," <TYPE> <IDENTIFIANT>)*)?")"
+        declaration()
+        <DEBUT>
+        blocInstruction()
+        <RETOUR> <IDENTIFIANT>";"
+        <FIN>
+    }
+
+void procedure() : {}
+    {
+        <PROCEDURE> <IDENTIFIANT>"("(<TYPE> <IDENTIFIANT> ("," <TYPE> <IDENTIFIANT>)*)?")"
+        declaration()
+        <DEBUT>
+        blocInstruction()
+        <FIN>
+    }
+
+void principale() : {}
+    {
+        <PRINCIPALE>
+        declaration()
+        <DEBUT>
+        blocInstruction()
+        <FIN>
+    }
+
+void blocInstruction() : {}
+    {
+        (affectation() | affichage() | ecriture() | boucle() | conditionnelle() | operateurIncrDecr() | appel())*
+    }
+
+void affichage() : {}
+    {
+        <AFFICHER>"("<IDENTIFIANT>")"";"
+    }
+
+void ecriture() : {}
+    {
+        <ECRITURE>"("<IDENTIFIANT>")"";"
+    }
+
+void operateurIncrDecr() : {}
+    {
+        <IDENTIFIANT>(<INCREMENT>|<DECREMENT>)";"
+    }
+
+void boucle() : {}
+    {
+        <BOUCLE_TANT_QUE> exprEt() <BOUCLE_FAIRE>
+        blocInstruction()
+        <BOUCLE_FAIT>
+    }
+
+void conditionnelle() : {}
+    {
+        <SICOND_SI> exprEt() <SICOND_ALORS>
+        blocInstruction()
+        <SICOND_FIN_SI>
+    }
+
+void declaration() #Declaration : {}
+    {
+        (<TYPE> <IDENTIFIANT> <SIGNE_AFFECTER> exprEt()";")*
+    }
+
+void affectation() #Affectation : {}
+    {
+        (<IDENTIFIANT> <SIGNE_AFFECTER> exprEt()";")*
+    }
+
+void exprEt() : {}
+    {
+        exprOu() ("et" exprOu()#EtExpr(2))*   
+    }
+
+void exprOu() : {}
+    {
+        exprNon() ("ou" exprNon()#OuExpr(2))*
+    }
+
+void exprNon() : {}
+    {
+        "non" exprBooleene() | exprBooleene()#NonExpr(1)
+    }
+
+void exprBooleene() : {}
+    {
+        exprAddSous() (   "=" exprAddSous()#EgalExpr(2) 
+                        | "<>" exprAddSous()#InegalExpr(2) 
+                        | ">"  exprAddSous()#SupExpr(2)
+                        | ">=" exprAddSous()#SupEgalExpr(2)
+                        | "<" exprAddSous()#InfExpr(2)
+                        | "<=" exprAddSous()#InfEgalExpr(2))* 
+    }
+
+void exprAddSous() : {}
+    {
+        exprMulDiv() ("+" exprMulDiv()#AddExpr(2)
+                        | "-" exprMulDiv()#SousExpr(2))*
+    }
+
+void exprMulDiv() : {}
+    {
+        exprPuissance() ("*" exprPuissance()#MulExpr(2) 
+                        | "/" exprPuissance()#DivExpr(2))*
+    }
+
+void exprPuissance(): {}
+    {
+        exprNegatif() ("^" exprNegatif()#PuisExpr(2))*
+    }
+
+void exprNegatif(): {}
+    {
+        expression() | ("-" expression()#NegExpr(1))
+    }
+
+void expression(): {}
+    {
+        <IDENTIFIANT>
+        {
+            jjtThis.data.put("name",token.image);
+        }#Identifiant 
+        | valeur() | appel()
+    }
+
+void valeur(): {}
+    {
+        <VALEUR_ENTIER>
+        { 
+            jjtThis.data.put("value",new Integer(Integer.parseInt(token.image)));
+        }#Entier
+        | "-"<VALEUR_ENTIER>
+        { 
+            jjtThis.data.put("value",new Integer(Integer.parseInt(token.image)));
+        }#Entier 
+        | "+"<VALEUR_ENTIER>
+        { 
+            jjtThis.data.put("value",new Integer(Integer.parseInt(token.image)));
+        }#Entier 
+        | <VALEUR_FLOTANT>
+        { 
+            jjtThis.data.put("value",new Double(Double.parseDouble(token.image)));
+        }#Flotant 
+        | "-"<VALEUR_FLOTANT>
+        { 
+            jjtThis.data.put("value",new Double(Double.parseDouble(token.image)));
+        }#Flotant 
+        | "+"<VALEUR_FLOTANT>
+        { 
+            jjtThis.data.put("value",new Double(Double.parseDouble(token.image)));
+        }#Flotant 
+        | <VALEUR_CHAINE> 
+        { 
+            jjtThis.data.put("value",new String(token.image));
+        }#Chaine
+        | <VALEUR_BOOLEEN> 
+        { 
+            jjtThis.data.put("value",new Boolean(Boolean.parseBoolean(token.image)));
+        }#Booleen
+        | "("exprEt()")"
+    }
+
+void appel(): {}
+    {
+        <IDENTIFIANT>
+        {
+            jjtThis.data.put("name",token.image);
+        }#Identifiant "(" (<IDENTIFIANT>(", " <IDENTIFIANT>)*)?")"";" 
+    }

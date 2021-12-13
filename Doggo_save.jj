@@ -3,6 +3,7 @@ options
     LOOKAHEAD=2;
     JAVA_UNICODE_ESCAPE = true;
 }
+
 PARSER_BEGIN(Doggo)
 public class Doggo {    
     public static void main(String args[]) throws ParseException {
@@ -84,16 +85,14 @@ TOKEN:
     | <VALEUR_BOOLEEN : "Vrai" | "Faux">
     }
 
-void programme():
-    {}
+void programme(): {}
     {
         <PROGRAMME> <IDENTIFIANT>
         (fonction() | procedure())*
         principale()
     }
 
-void fonction():
-    {}
+void fonction(): {}
     {
         <FONCTION> <TYPE> <IDENTIFIANT>"("(<TYPE> <IDENTIFIANT> ("," <TYPE> <IDENTIFIANT>)*)?")"
         declaration()
@@ -103,8 +102,7 @@ void fonction():
         <FIN>
     }
 
-void procedure():
-    {}
+void procedure(): {}
     {
         <PROCEDURE> <IDENTIFIANT>"("(<TYPE> <IDENTIFIANT> ("," <TYPE> <IDENTIFIANT>)*)?")"
         declaration()
@@ -113,8 +111,7 @@ void procedure():
         <FIN>
     }
 
-void principale():
-    {}
+void principale(): {}
     {
         <PRINCIPALE>
         declaration()
@@ -123,120 +120,101 @@ void principale():
         <FIN>
     }
 
-void blocInstruction():
-    {}
+void blocInstruction(): {}
     {
         (affectation() | affichage() | ecriture() | boucle() | conditionnelle() | operateurIncrDecr() | appel())*
     }
 
-void affichage():
-    {}
+void affichage(): {}
     {
         <AFFICHER>"("<IDENTIFIANT>")"";"
     }
 
-void ecriture():
-    {}
+void ecriture(): {}
     {
         <ECRITURE>"("<IDENTIFIANT>")"";"
     }
 
-void operateurIncrDecr():
-    {}
+void operateurIncrDecr(): {}
     {
         <IDENTIFIANT>(<INCREMENT>|<DECREMENT>)";"
     }
 
-void boucle():
-    {}
+void boucle(): {}
     {
         <BOUCLE_TANT_QUE> exprEt() <BOUCLE_FAIRE>
         blocInstruction()
         <BOUCLE_FAIT>
     }
 
-void conditionnelle():
-    {}
+void conditionnelle(): {}
     {
         <SICOND_SI> exprEt() <SICOND_ALORS>
         blocInstruction()
         <SICOND_FIN_SI>
     }
 
-void declaration():
-    {}
+void declaration(): {}
     {
         (<TYPE> <IDENTIFIANT> <SIGNE_AFFECTER> exprEt()";")*
     }
 
-void affectation():
-    {}
+void affectation(): {}
     {
         <IDENTIFIANT> <SIGNE_AFFECTER> exprEt()";"
     }
 
-void exprEt():
-    {}
+void exprEt(): {}
     {
         exprOu() ("et" exprOu())?
     }
 
-void exprOu():
-    {}
+void exprOu(): {}
     {
         exprNon() ("ou" exprNon())?
     }
 
-void exprNon():
-    {}
+void exprNon(): {}
     {
         "non" exprBooleene() | exprBooleene()
     }
 
-void exprBooleene():
-    {}
+void exprBooleene(): {}
     {
         exprAddSous() (("=" | "<>" | ">" | ">=" | "<" | "<=") exprAddSous())?
     }
 
-void exprAddSous():
-    {}
+void exprAddSous(): {}
     {
         exprMulDiv() (("+" | "-") exprMulDiv())?
     }
 
-void exprMulDiv():
-    {}
+void exprMulDiv(): {}
     {
         exprPuissance() (("*" | "/") exprPuissance())?
     }
 
-void exprPuissance():
-    {}
+void exprPuissance(): {}
     {
         exprNegatif() (("^") exprNegatif())?
     }
 
-void exprNegatif():
-    {}
+void exprNegatif(): {}
     {
         expression() | ("-" expression())
     }
 
-void expression():
-    {}
+void expression(): {}
     {
         <IDENTIFIANT> | valeur() | appel()
     }
 
-void valeur():
-    {}
+void valeur(): {}
     {
         <VALEUR_ENTIER> | "-"<VALEUR_ENTIER> | "+"<VALEUR_ENTIER> | <VALEUR_FLOTANT> | "-"<VALEUR_FLOTANT> | "+"<VALEUR_FLOTANT> | <VALEUR_CHAINE> | <VALEUR_BOOLEEN> | "("exprEt()")"
     }
 
-void appel():
-    {}
+void appel(): {}
     {
         <IDENTIFIANT>"(" (<IDENTIFIANT>(", " <IDENTIFIANT>)*)?")"";" 
     }
