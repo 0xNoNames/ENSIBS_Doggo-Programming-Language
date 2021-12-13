@@ -1,0 +1,248 @@
+options
+{
+    // LOOKAHEAD=2;
+    JAVA_UNICODE_ESCAPE = true;
+}
+PARSER_BEGIN(Doggo)
+    public class Doggo {    
+        public static void main(String args[]) throws ParseException {
+            Doggo parser;
+            if(args.length==0) {
+                System.out.println("Entrée standard");
+                parser = new Doggo(System.in);
+            }
+            else if(args.length==1) {
+                System.out.println("Analyse du fichier : " + args[0] + "...");
+                try {
+                    parser = new algexec(new java.io.FileInputStream(args[0] + ".dog"));
+                } catch (java.io.FileNotFoundException e) {
+                    System.out.println("Le fichier :" + args[0] + "n'existe pas...");
+                    return;
+                }
+            }
+            else {
+                System.out.println("Erreur de lecture");
+                return;
+            }
+            try {
+                // Lance l'amorçage (avec la 1ère règle)
+                parser.Programme() ;
+                System.out.println("Analyse syntaxique OK") ;
+                pw.close() ;
+                try {
+                    fichierJava.close() ;
+                }
+                catch (java.io.IOException e) {}
+            catch (ParseException e){
+                System.out.println("L'analyse syntaxique révèle des erreurs") ;
+            }
+        }
+    }
+PARSER_END(Doggo)
+
+SKIP:
+    {
+        " "
+        | "\t"
+        | "\n"
+        | "\r"
+        | "\f"
+    }
+
+SPECIAL_TOKEN:
+    {
+        <COMMENTAIRES: "$" (["a"-"z","A"-"Z","0"-"9",' ']) * "$">
+    }
+
+TOKEN:
+    {
+        <PROGRAMME : "programme">
+        | <FONCTION : "fonction">
+        | <PROCEDURE : "procedure">
+        | <PRINCIPAL : "principal">
+        | <DEBUT : "debut">
+        | <RETOUR : "retour">
+        | <FIN : "fin">
+        | <ECRITURE : "ecrire">
+        | <AFFICHER : "afficher">
+        | <SICOND_SI : "si">
+        | <SICOND_ALORS : "alors">
+        | <SICOND_FIN_SI : "fin si">
+        | <SICOND_SINON : "sinon">
+        | <BOUCLE_TANT_QUE : "tant que">
+        | <BOUCLE_FAIRE : "faire">
+        | <BOUCLE_FAIT : "fait">
+    }
+
+TOKEN:
+    {
+    <TYPE : "entier" | "chaine" | "flottant" | "booleen">
+    | <IDENTIFIANT : (["a-zA-Z"]) (["a"-"z","A"-"Z","0"-"9"]) *>
+    | <SIGNE_AFFECTER : ":=">
+    | <VALEUR_ENTIER : (["0"-"9"]) *>
+    | <VALEUR_FLOTANT : <VALEUR_ENTIER>.<VALEUR_ENTIER>>
+    | <VALEUR_CHAINE : "\"" (["a"-"z","A"-"Z","0"-"9"]) * "\"">
+    | <VALEUR_BOOLEEN : "Vrai" | "Faux">
+    }
+
+void programme():
+    {}
+    {
+        enTete()
+        (fonction() | procedure())*
+        principal()
+    }
+
+void enTete():
+    {
+        <PROGRAMME> <IDENTIFIANT>
+    }
+
+void fonction():
+    {}
+    {
+        <FONCTION> <IDENTIFIANT>"("(<TYPE> <IDENTIFIANT> ("," <TYPE> <IDENTIFIANT>)*)?")"
+        declaration()
+        <DEBUT>
+        blocInstruction()
+        <RETOUR> <IDENTIFIANT>
+        <FIN>
+    }
+
+void procedure():
+    {}
+    {
+        <PROCEDURE> <IDENTIFIANT>"("(<TYPE> <IDENTIFIANT> ("," <TYPE> <IDENTIFIANT>)*)?")"
+        declaration()
+        <DEBUT>
+        blocInstruction()
+        <FIN>
+    }
+
+void principal():
+    {}
+    {
+        <PRINCIPAL>
+        declaration()
+        <DEBUT>
+        blocInstruction()
+        <FIN>
+    }
+
+void blocInstruction():
+    {}
+    {
+        affectation() | affichage() | ecriture() | boucle() | conditionnelle() | operateurIncrDecr()
+    }
+
+void affichage():
+    {}
+    {
+        <AFFICHER>"("<IDENTIFIANT>")"";"
+    }
+
+void ecriture():
+    {}
+    {
+        <ECRIRE>"("<IDENTIFIANT>")"";"
+    }
+
+void operateurIncrDecr():
+    {}
+    {
+        <IDENTIFIANT>("++"|"--")";"
+    }
+
+void boucle():
+    {}
+    {
+        <BOUCLE_TANT_QUE> expression() <BOUCLE_FAIRE>
+        blocInstruction()
+        <BOUCLE_FAIT>
+    }
+
+void conditionnelle():
+    {}
+    {
+        <SICOND_SI> expression() <SICOND_ALORS>
+        blocInstruction()
+        <SICOND_FIN_SI>
+    }
+
+void declaration():
+    {}
+    {
+        <TYPE> <IDENTIFIANT> <SIGNE_AFFECTER> expression()";"
+    }
+
+void affectation():
+    {}
+    {
+        <IDENTIFIANT> <SIGNE_AFFECTER> expression()";"
+    }
+
+void expression():
+    {}
+    {
+        expression1() ("et" expression1())?
+    }
+
+void expression1():
+    {}
+    {
+        expression2() ("ou" expression2())?
+    }
+
+void expression2():
+    {}
+    {
+        "non" expression3() | expression3()
+    }
+
+void expression3():
+    {}
+    {
+        expression4 (("=" | "<>" | ">" | ">=" | "<" | "<=") expression4)?
+    }
+
+void expression4():
+    {}
+    {
+        expression5 (("+" | "-") expression5)?
+    }
+
+void expression5():
+    {}
+    {
+        expression6 (("*" | "/") expression6)?
+    }
+
+void expression6():
+    {}
+    {
+        expression7 (("^") expression7)?
+    }
+    
+void expression7():
+    {}
+    {
+        expression8 | ("-" expression8)
+    }
+
+void expression8():
+    {}
+    {
+        <IDENTIFIANT> | valeur() | appel()
+    }
+
+void valeur():
+    {}
+    {
+        <VALEUR_ENTIER> | "-"<VALEUR_ENTIER> | "+"<VALEUR_ENTIER> | <VALEUR_FLOTANT> | "-"<VALEUR_FLOTANT> | "+"<VALEUR_FLOTANT> | <VALEUR_CHAINE> | <VALEUR_BOOLEEN>
+    }
+
+void appel():
+    {}
+    {
+        <IDENTIFIANT>"(" (<IDENTIFIANT>(", " <IDENTIFIANT>)*)?")"   
+    }
