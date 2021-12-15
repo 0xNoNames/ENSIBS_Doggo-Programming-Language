@@ -1,1 +1,0 @@
-jjtree -OUTPUT_DIRECTORY:./compiled/ Doggo.jjt && echo -  && echo --------------- COMPILATION JCC OK --------------- && echo - &&  cd ./compiled && javacc Doggo.jj && javac ./Doggo.java && echo - && echo --------------- COMPILATION JAVA OK --------------- && echo - && java Doggo ../fichier_test.dog
